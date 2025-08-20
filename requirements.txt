@@ -1,0 +1,21 @@
+# Core FastAPI stack
+fastapi>=0.104.1
+uvicorn[standard]>=0.24.0
+pydantic>=2.5.0
+pydantic-settings>=2.1.0
+
+# Database
+sqlalchemy>=2.0.23
+alembic>=1.13.0
+
+# Redis and Celery
+redis>=5.0.1
+celery[redis]>=5.3.4
+
+# Monitoring and utilities
+flower>=2.0.1
+faker>=21.0.0
+
+# Development dependencies
+python-multipart>=0.0.6
+python-dotenv>=1.0.0
