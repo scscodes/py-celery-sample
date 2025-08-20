@@ -14,11 +14,11 @@ from app.config.celery_config import celery_app
 # Basic task modules
 from app.tasks.basic import cache_tasks, crud_tasks
 
-# Orchestration task modules  
-from app.tasks.orchestration import chains, periodic, canvas, retries
+# Orchestration task modules (TODO: implement these)
+# from app.tasks.orchestration import chains, periodic, canvas, retries
 
-# Enterprise task modules
-from app.tasks.enterprise import asset_sync, incident_workflows, reporting
+# Enterprise task modules (TODO: implement these)
+# from app.tasks.enterprise import asset_sync, incident_workflows, reporting
 
 
 # Export the main Celery app instance
