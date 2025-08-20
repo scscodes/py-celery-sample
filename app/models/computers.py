@@ -80,10 +80,10 @@ class Computer(Base):
     owner = relationship("User", back_populates="computers")
     
     # Relationship to events (computers generate events)
-    events = relationship("Event", back_populates="computer", lazy="dynamic")
+    events = relationship("Event", back_populates="computer", lazy="select")
     
     # Relationship to incidents (computers can be involved in incidents)
-    incidents = relationship("Incident", back_populates="affected_computer", lazy="dynamic")
+    incidents = relationship("Incident", back_populates="affected_computer", lazy="select")
     
     def __repr__(self):
         return f"<Computer(hostname='{self.hostname}', status='{self.status}')>"

@@ -78,18 +78,20 @@ def make_celery() -> Celery:
         
         # Beat Schedule (for periodic tasks)
         beat_schedule={
-            # Example periodic task - runs every 5 minutes
-            'periodic-health-check': {
-                'task': 'app.tasks.orchestration.periodic.health_check',
-                'schedule': timedelta(minutes=5),
-                'options': {'queue': 'orchestration'}
-            },
-            # Example daily report - runs at 9 AM daily
-            'daily-system-report': {
-                'task': 'app.tasks.enterprise.reporting.generate_daily_report',
-                'schedule': timedelta(hours=24),  # Run every 24 hours
-                'options': {'queue': 'enterprise'}
-            },
+            # Periodic tasks disabled until orchestration modules are activated
+            # Uncomment and configure these when ready to use Celery Beat
+            
+            # 'periodic-health-check': {
+            #     'task': 'monitoring.system_health_check',  # Corrected task name
+            #     'schedule': timedelta(minutes=5),
+            #     'options': {'queue': 'orchestration'}
+            # },
+            
+            # 'daily-system-report': {
+            #     'task': 'app.tasks.enterprise.reporting.generate_daily_report',
+            #     'schedule': timedelta(hours=24),
+            #     'options': {'queue': 'enterprise'}
+            # },
         },
         
         # Timezone for beat scheduler

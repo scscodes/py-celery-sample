@@ -69,32 +69,41 @@ class User(Base):
         "Group", 
         secondary=user_group_association, 
         back_populates="members",
-        lazy="dynamic"
+        lazy="select"  # Changed from "dynamic" to support eager loading
     )
     
-    # Self-referential relationship for manager hierarchy
+    # Self-referential relationship for manager hierarchy defined explicitly
+    # Manager: many-to-one (this user's manager)
+    manager = relationship(
+        "User",
+        remote_side="User.id",
+        lazy="select"
+    )
+    
+    # Subordinates: one-to-many (users who report to this user)
     subordinates = relationship(
-        "User", 
-        backref="manager", 
-        remote_side=[id]
+        "User",
+        foreign_keys="User.manager_id",
+        lazy="select",
+        overlaps="manager"
     )
     
     # Relationship to computers (users can own/be assigned computers)
-    computers = relationship("Computer", back_populates="owner", lazy="dynamic")
+    computers = relationship("Computer", back_populates="owner", lazy="select")
     
     # Relationship to incidents (users can be assignees or reporters)
     assigned_incidents = relationship(
         "Incident", 
         foreign_keys="Incident.assignee_id",
         back_populates="assignee",
-        lazy="dynamic"
+        lazy="select"
     )
     
     reported_incidents = relationship(
         "Incident",
         foreign_keys="Incident.reporter_id", 
         back_populates="reporter",
-        lazy="dynamic"
+        lazy="select"
     )
     
     def __repr__(self):
@@ -108,7 +117,17 @@ class User(Base):
     @property
     def is_manager(self):
         """Check if user is a manager (has subordinates)."""
-        return self.subordinates.count() > 0
+        return len(self.subordinates) > 0 if self.subordinates is not None else False
+    
+    @property
+    def subordinate_count(self):
+        """Get count of subordinates."""
+        return len(self.subordinates) if self.subordinates is not None else 0
+    
+    @property
+    def group_count(self):
+        """Get count of group memberships."""
+        return len(self.groups) if self.groups is not None else 0
 
 
 class Group(Base):
@@ -149,7 +168,7 @@ class Group(Base):
         "User", 
         secondary=user_group_association, 
         back_populates="groups",
-        lazy="dynamic"
+        lazy="select"  # Changed from "dynamic" to support eager loading
     )
     
     # Self-referential relationship for group hierarchy
@@ -165,9 +184,14 @@ class Group(Base):
     @property
     def member_count(self):
         """Get count of group members."""
-        return self.members.count()
+        return len(self.members) if self.members is not None else 0
     
     @property
     def is_nested_group(self):
         """Check if group has parent groups (is nested)."""
         return self.parent_group_id is not None
+    
+    @property
+    def child_group_count(self):
+        """Get count of child groups."""
+        return len(self.child_groups) if self.child_groups is not None else 0

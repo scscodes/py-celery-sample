@@ -80,9 +80,9 @@ class GroupUpdate(BaseModel):
     parent_group_id: Optional[int] = None
 
 
-# Response schemas (for API responses)
+# Basic response schema without relationships (Phase 1: Stability)
 class UserResponse(UserBase):
-    """Schema for user API responses."""
+    """Basic user API response without relationships."""
     id: int
     manager_id: Optional[int]
     is_locked: bool
@@ -92,19 +92,28 @@ class UserResponse(UserBase):
     created_at: datetime
     updated_at: datetime
     
-    # Computed properties
+    # Computed properties - safely handled
     full_name: Optional[str] = None
     is_manager: Optional[bool] = None
     
     class Config:
-        from_attributes = True  # Enable ORM mode for SQLAlchemy models
+        from_attributes = True
         
     @validator('full_name', always=True, pre=False)
     def set_full_name(cls, v, values):
-        """Set full name from first and last name."""
+        """Set full name from first and last name if not already set."""
+        if v is not None:
+            return v
         first_name = values.get('first_name', '')
         last_name = values.get('last_name', '') 
-        return f"{first_name} {last_name}".strip()
+        return f"{first_name} {last_name}".strip() if first_name or last_name else None
+        
+    @validator('is_manager', always=True, pre=False)
+    def set_is_manager(cls, v, values):
+        """Safely set is_manager property."""
+        if v is not None:
+            return v
+        return False  # Default to False for basic response
 
 
 class GroupResponse(GroupBase):
@@ -115,7 +124,7 @@ class GroupResponse(GroupBase):
     created_at: datetime
     updated_at: datetime
     
-    # Computed properties
+    # Computed properties - will be populated from SQLAlchemy model properties
     member_count: Optional[int] = None
     is_nested_group: Optional[bool] = None
     
@@ -149,25 +158,71 @@ class GroupSummary(BaseModel):
         from_attributes = True
 
 
-# Extended response schemas with relationships
+# Extended response schemas with safe relationship handling
 class UserDetailResponse(UserResponse):
-    """Detailed user response including relationships."""
-    manager: Optional[UserSummary] = None
-    subordinates: List[UserSummary] = []
-    groups: List[GroupSummary] = []
+    """Detailed user response with safe relationship handling."""
+    # Use simple references instead of full nested objects initially
+    manager: Optional['UserSummary'] = None
+    subordinates: List['UserSummary'] = []
+    groups: List['GroupSummary'] = []
+    
+    # Add safe computed fields
+    subordinate_count: int = 0
+    group_count: int = 0
     
     class Config:
         from_attributes = True
+        
+    @validator('subordinates', always=True, pre=False)
+    def ensure_subordinates_list(cls, v):
+        """Ensure subordinates is always a list, never None."""
+        return v if v is not None else []
+        
+    @validator('groups', always=True, pre=False) 
+    def ensure_groups_list(cls, v):
+        """Ensure groups is always a list, never None."""
+        return v if v is not None else []
+        
+    @validator('subordinate_count', always=True, pre=False)
+    def set_subordinate_count(cls, v, values):
+        """Set subordinate count from subordinates list."""
+        subordinates = values.get('subordinates', [])
+        return len(subordinates) if subordinates else 0
+        
+    @validator('group_count', always=True, pre=False)
+    def set_group_count(cls, v, values):
+        """Set group count from groups list."""
+        groups = values.get('groups', [])
+        return len(groups) if groups else 0
 
 
 class GroupDetailResponse(GroupResponse):
-    """Detailed group response including relationships."""
-    parent_group: Optional[GroupSummary] = None
-    child_groups: List[GroupSummary] = []
-    members: List[UserSummary] = []
+    """Detailed group response with safe relationship handling."""
+    parent_group: Optional['GroupSummary'] = None
+    child_groups: List['GroupSummary'] = []
+    members: List['UserSummary'] = []
+    
+    # Add safe computed fields
+    child_group_count: int = 0
     
     class Config:
         from_attributes = True
+        
+    @validator('child_groups', always=True, pre=False)
+    def ensure_child_groups_list(cls, v):
+        """Ensure child_groups is always a list, never None."""
+        return v if v is not None else []
+        
+    @validator('members', always=True, pre=False)
+    def ensure_members_list(cls, v):
+        """Ensure members is always a list, never None."""
+        return v if v is not None else []
+        
+    @validator('child_group_count', always=True, pre=False)
+    def set_child_group_count(cls, v, values):
+        """Set child group count from child_groups list."""
+        child_groups = values.get('child_groups', [])
+        return len(child_groups) if child_groups else 0
 
 
 # Membership management schemas

@@ -125,6 +125,12 @@ class Event(Base):
             self.severity in [EventSeverity.CRITICAL, EventSeverity.ERROR] and
             not self.is_processed
         )
+    
+    # Property to handle child_events safely for Pydantic
+    @property
+    def safe_child_events(self):
+        """Get child events as a list, never None."""
+        return self.child_events if self.child_events is not None else []
 
 
 class Incident(Base):

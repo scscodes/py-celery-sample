@@ -6,7 +6,7 @@ health monitoring, and asset tracking workflows.
 """
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from typing import List, Optional
 
 from app.core.dependencies import get_database
@@ -77,7 +77,9 @@ async def get_computer(
     - Health metrics and compliance status
     - Recent events and incident history
     """
-    computer = db.query(Computer).filter(Computer.id == computer_id).first()
+    computer = db.query(Computer).options(
+        joinedload(Computer.owner)  # Load owner relationship
+    ).filter(Computer.id == computer_id).first()
     
     if not computer:
         raise HTTPException(
@@ -98,7 +100,9 @@ async def get_computer_by_hostname(
     
     Useful for agent-based monitoring systems that report by hostname.
     """
-    computer = db.query(Computer).filter(Computer.hostname == hostname.lower()).first()
+    computer = db.query(Computer).options(
+        joinedload(Computer.owner)  # Load owner relationship
+    ).filter(Computer.hostname == hostname.lower()).first()
     
     if not computer:
         raise HTTPException(

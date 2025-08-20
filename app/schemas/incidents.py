@@ -189,11 +189,23 @@ class EventDetailResponse(EventResponse):
     """Detailed event response including relationships."""
     computer: Optional['ComputerSummary'] = None
     user: Optional['UserSummary'] = None
-    parent_event: Optional[EventSummary] = None
+    parent_event: Optional[EventSummary] = None  # Not populated - relationship not in model
     child_events: List[EventSummary] = []
     
     class Config:
         from_attributes = True
+        
+    @validator('parent_event', always=True, pre=False)
+    def set_parent_event_default(cls, v):
+        """Set parent_event to None since relationship not implemented."""
+        return None  # Always None until relationship is added to model
+        
+    @validator('child_events', always=True, pre=True)
+    def ensure_child_events_list(cls, v):
+        """Ensure child_events is always a list, never None."""
+        if v is None:
+            return []
+        return v
 
 
 class IncidentDetailResponse(IncidentResponse):
@@ -201,10 +213,15 @@ class IncidentDetailResponse(IncidentResponse):
     reporter: Optional['UserSummary'] = None
     assignee: Optional['UserSummary'] = None
     affected_computer: Optional['ComputerSummary'] = None
-    related_events: List[EventSummary] = []
+    related_events: List[EventSummary] = []  # Not populated - relationship not in model
     
     class Config:
         from_attributes = True
+        
+    @validator('related_events', always=True, pre=True)
+    def set_related_events_default(cls, v):
+        """Set related_events to empty list since relationship not implemented."""
+        return []  # Always empty list until relationship is added to model
 
 
 # Reporting and analytics schemas

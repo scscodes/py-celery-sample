@@ -6,7 +6,7 @@ group membership management, and user-related workflows.
 """
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from typing import List, Optional
 
 from app.core.dependencies import get_database
@@ -64,7 +64,12 @@ async def get_user(
     - Group memberships
     - Assigned computers
     """
-    user = db.query(User).filter(User.id == user_id).first()
+    # Complete relationship loading - all relationships
+    user = db.query(User).options(
+        joinedload(User.manager),       # Load manager relationship
+        joinedload(User.subordinates),  # Load subordinates relationship
+        joinedload(User.groups)         # Load group memberships
+    ).filter(User.id == user_id).first()
     
     if not user:
         raise HTTPException(

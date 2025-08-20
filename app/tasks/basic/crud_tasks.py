@@ -389,26 +389,39 @@ def batch_update_computers_task(self, computer_updates: List[Dict[str, Any]]) ->
         
         for update_data in computer_updates:
             try:
-                hostname = update_data['hostname']
-                computer = db.query(Computer).filter(Computer.hostname == hostname).first()
+                # Support both hostname and computer_id as identifiers
+                computer = None
+                identifier = None
+                
+                if 'hostname' in update_data:
+                    identifier = update_data['hostname']
+                    computer = db.query(Computer).filter(Computer.hostname == identifier).first()
+                elif 'computer_id' in update_data:
+                    identifier = update_data['computer_id']
+                    computer = db.query(Computer).filter(Computer.id == identifier).first()
+                else:
+                    failed_count += 1
+                    errors.append("Update failed: missing 'hostname' or 'computer_id' identifier")
+                    continue
                 
                 if computer:
                     # Apply updates
                     for key, value in update_data.items():
-                        if hasattr(computer, key) and key != 'hostname':
+                        if hasattr(computer, key) and key not in ['hostname', 'computer_id', 'id']:
                             setattr(computer, key, value)
                     
                     computer.updated_at = datetime.utcnow()
                     updated_count += 1
-                    updated_hostnames.append(hostname)
+                    updated_hostnames.append(computer.hostname)  # Always use hostname for tracking
                     
                 else:
                     failed_count += 1
-                    errors.append(f"Computer not found: {hostname}")
+                    errors.append(f"Computer not found: {identifier}")
                     
             except Exception as update_error:
                 failed_count += 1
-                errors.append(f"Update failed for {update_data.get('hostname', 'unknown')}: {str(update_error)}")
+                identifier_value = update_data.get('hostname') or update_data.get('computer_id', 'unknown')
+                errors.append(f"Update failed for {identifier_value}: {str(update_error)}")
         
         # Commit all updates at once
         if updated_count > 0:

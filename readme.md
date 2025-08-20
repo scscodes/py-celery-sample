@@ -214,4 +214,76 @@ Feature-based modules optimized for Celery showcase:
 - **Focus**: Celery orchestration patterns and integration techniques
 - **Scope**: IT Asset & Incident Management middleware showcase
 - **Complexity**: Balance between demonstration value and maintainability
-- **Extensibility**: Design for easy addition of new Celery scenarios 
+- **Extensibility**: Design for easy addition of new Celery scenarios
+
+# Quick Setup Guide
+
+## Prerequisites
+- Python 3.11+
+- Docker and Docker Compose (modern `docker compose` command)
+- Git
+
+## Installation Steps
+
+### 1. Clone and Setup Environment
+```bash
+# Clone the repository
+git clone <repository-url>
+cd py-celery-sample
+
+# Create and activate virtual environment
+python -m venv venv
+source venv/bin/activate  # Linux/Mac
+# or: venv\Scripts\activate  # Windows
+
+# Install dependencies
+pip install -r requirements.txt
+```
+
+### 2. Start Infrastructure Services
+```bash
+# Start Redis using modern Docker Compose (no hyphen)
+docker compose up -d redis
+
+# Verify Redis is running
+docker compose ps
+docker compose exec redis redis-cli ping  # Should return PONG
+```
+
+**Important**: Use `docker compose` (no hyphen), not `docker-compose`. The legacy command may fail with `ModuleNotFoundError: No module named 'distutils'` on newer systems.
+
+### 3. Start Application Services
+```bash
+# Terminal 1: Start Celery Worker
+celery -A app.tasks.celery_app worker --loglevel=info
+
+# Terminal 2: Start Celery Beat (scheduler)
+celery -A app.tasks.celery_app beat --loglevel=info
+
+# Terminal 3: Start FastAPI Application
+python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+```
+
+### 4. Access the Application
+- **API Documentation**: http://localhost:8000/docs
+- **Alternative Docs**: http://localhost:8000/redoc
+- **Health Check**: http://localhost:8000/health
+
+## Troubleshooting
+
+### Docker Compose Issues
+If you encounter `ModuleNotFoundError: No module named 'distutils'`:
+- Use `docker compose` instead of `docker-compose`
+- Ensure you have Docker Desktop or modern Docker Engine installed
+
+### Redis Connection Issues
+```bash
+# Check Redis status
+docker compose ps
+
+# Check Redis logs
+docker compose logs redis
+
+# Test Redis connectivity
+docker compose exec redis redis-cli ping
+```

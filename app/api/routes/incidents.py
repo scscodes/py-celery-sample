@@ -6,7 +6,7 @@ event processing, and IT service management workflows.
 """
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from typing import List, Optional
 from datetime import datetime, timedelta
 
@@ -76,7 +76,12 @@ async def get_event(
     """
     Retrieve a specific event by ID with detailed information.
     """
-    event = db.query(Event).filter(Event.id == event_id).first()
+    event = db.query(Event).options(
+        joinedload(Event.computer),  # Load computer relationship
+        joinedload(Event.user),      # Load user relationship
+        joinedload(Event.child_events)  # Load child events
+        # Note: parent_event relationship removed - not defined in model
+    ).filter(Event.id == event_id).first()
     
     if not event:
         raise HTTPException(
@@ -209,7 +214,12 @@ async def get_incident(
     """
     Retrieve a specific incident by ID with detailed information.
     """
-    incident = db.query(Incident).filter(Incident.id == incident_id).first()
+    incident = db.query(Incident).options(
+        joinedload(Incident.reporter),         # Load reporter relationship
+        joinedload(Incident.assignee),         # Load assignee relationship
+        joinedload(Incident.affected_computer)  # Load affected computer relationship
+        # Note: related_events relationship removed - not defined in model
+    ).filter(Incident.id == incident_id).first()
     
     if not incident:
         raise HTTPException(
