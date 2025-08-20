@@ -15,7 +15,7 @@ from app.config.celery_config import celery_app
 from app.tasks.basic import cache_tasks, crud_tasks
 
 # Orchestration task modules (TODO: implement these)
-# from app.tasks.orchestration import chains, periodic, canvas, retries
+from app.tasks.orchestration import workflow_tasks, monitoring_tasks, batch_tasks, retry_tasks
 
 # Enterprise task modules (TODO: implement these)
 # from app.tasks.enterprise import asset_sync, incident_workflows, reporting
